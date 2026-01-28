@@ -4,4 +4,7 @@ __pycache__/
 ~lock.*
 chromedriver_linux64.zip
 .venv
-.idea
+.idea 
+.env
+*.csv 
+data/
