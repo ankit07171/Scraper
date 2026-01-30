@@ -87,13 +87,12 @@ from dotenv import load_dotenv
 load_dotenv()   # 👈 THIS IS REQUIRED
 
 API_KEY = os.getenv("API_KEY")
-print(API_KEY)  # temporary debug
 
 warnings.filterwarnings("ignore")
 # import os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-# API_KEY = "AIzaSyBqKKezsIqOPpwh6CsInrs8yVnr2sOPdiI"
+# API_KEY = ""
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
