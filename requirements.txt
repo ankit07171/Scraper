@@ -1,4 +1,5 @@
-selenium
+streamlit
 pandas
-xlrd
-openpyxl
+matplotlib
+python-dotenv
+apify-client
