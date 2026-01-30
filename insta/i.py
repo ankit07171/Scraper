@@ -68,6 +68,11 @@ from apify_client import ApifyClient
 import sys
 import os 
 
+from dotenv import load_dotenv 
+load_dotenv()   # 👈 THIS IS REQUIRED
+
+APIFY_TOKEN = os.getenv("APIFY_TOKEN")
+print(APIFY_TOKEN)  # temporary debug
 
 # UTF-8 output (Windows fix)
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
