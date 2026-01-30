@@ -75,29 +75,102 @@ import sys
 
 
 
+# import requests
+# import pandas as pd
+# import os
+# import time
+# import sys
+# import io
+# import re
+# import warnings
+# from dotenv import load_dotenv 
+# load_dotenv()   # 👈 THIS IS REQUIRED
+
+# API_KEY = os.getenv("API_KEY")
+
+# warnings.filterwarnings("ignore")
+# # import os
+# sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+
+# # API_KEY = ""
+
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# DATA_DIR = os.path.join(BASE_DIR, "data")
+# os.makedirs(DATA_DIR, exist_ok=True)
+
+# def extract_video_id(url_or_id):
+#     if "youtube.com" in url_or_id:
+#         return url_or_id.split("v=")[-1].split("&")[0]
+#     if "youtu.be" in url_or_id:
+#         return url_or_id.split("/")[-1]
+#     return url_or_id.strip()
+
+# def fetch_youtube_comments(video_input):
+#     video_id = extract_video_id(video_input)
+
+#     url = "https://www.googleapis.com/youtube/v3/commentThreads"
+#     params = {
+#         "part": "snippet",
+#         "videoId": video_id,
+#         "maxResults": 100,
+#         "key": API_KEY
+#     }
+
+#     response = requests.get(url, params=params)
+#     data = response.json()
+
+#     comments = [
+#         item["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+#         for item in data.get("items", [])
+#     ]
+
+#     if not comments:
+#         print("")  # IMPORTANT: print NOTHING
+#         sys.exit(0)
+
+#     df = pd.DataFrame({"comment": comments})
+
+#     ts = time.strftime("%Y%m%d_%H%M%S")
+#     csv_path = os.path.join(DATA_DIR, f"comments_{ts}.csv")
+#     df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+
+#     # 🔥 ONLY print CSV path
+#     print(csv_path)
+
+# if __name__ == "__main__":
+#     fetch_youtube_comments(sys.argv[1])
+
+
+
+
+
+
+
+
 import requests
 import pandas as pd
 import os
 import time
 import sys
 import io
-import re
 import warnings
-from dotenv import load_dotenv 
-load_dotenv()   # 👈 THIS IS REQUIRED
-
-API_KEY = os.getenv("API_KEY")
 
 warnings.filterwarnings("ignore")
-# import os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-# API_KEY = ""
-
+# ---------- PATH SETUP ----------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
+# ---------- API KEY ----------
+API_KEY = os.getenv("API_KEY")
+
+if not API_KEY:
+    print("ERROR: API_KEY not found", file=sys.stderr)
+    sys.exit(1)
+
+# ---------- HELPERS ----------
 def extract_video_id(url_or_id):
     if "youtube.com" in url_or_id:
         return url_or_id.split("v=")[-1].split("&")[0]
@@ -116,7 +189,12 @@ def fetch_youtube_comments(video_input):
         "key": API_KEY
     }
 
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, timeout=15)
+
+    if response.status_code != 200:
+        print(f"ERROR: YouTube API failed ({response.status_code})", file=sys.stderr)
+        sys.exit(1)
+
     data = response.json()
 
     comments = [
@@ -125,8 +203,8 @@ def fetch_youtube_comments(video_input):
     ]
 
     if not comments:
-        print("")  # IMPORTANT: print NOTHING
-        sys.exit(0)
+        print("ERROR: No comments found", file=sys.stderr)
+        sys.exit(1)
 
     df = pd.DataFrame({"comment": comments})
 
@@ -134,8 +212,13 @@ def fetch_youtube_comments(video_input):
     csv_path = os.path.join(DATA_DIR, f"comments_{ts}.csv")
     df.to_csv(csv_path, index=False, encoding="utf-8-sig")
 
-    # 🔥 ONLY print CSV path
+    # ✅ ONLY OUTPUT — REQUIRED BY STREAMLIT
     print(csv_path)
 
+# ---------- ENTRY ----------
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("ERROR: No video URL provided", file=sys.stderr)
+        sys.exit(1)
+
     fetch_youtube_comments(sys.argv[1])
