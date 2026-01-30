@@ -4,3 +4,4 @@ matplotlib
 python-dotenv
 requests
 apify-client   
+textblob
