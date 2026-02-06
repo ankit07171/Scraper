@@ -35,6 +35,10 @@ if "csv_path" not in st.session_state:
     st.session_state.csv_path = None
 if "df" not in st.session_state:
     st.session_state.df = None
+if "video_metadata" not in st.session_state:
+    st.session_state.video_metadata = None
+if "ai_summary" not in st.session_state:
+    st.session_state.ai_summary = None
 
 # ---------------- HEADER ----------------
 st.markdown(
@@ -95,6 +99,16 @@ if st.button("🚀 Fetch & Analyze"):
 
         st.session_state.csv_path = csv_path
         st.session_state.df = pd.read_csv(csv_path)
+        
+        # Load metadata for both platforms
+        metadata_path = csv_path.replace("comments_", "metadata_").replace(".csv", ".json")
+        if os.path.exists(metadata_path):
+            import json
+            with open(metadata_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                st.session_state.video_metadata = data.get("metadata")
+                st.session_state.ai_summary = data.get("ai_summary")
+        
         st.success(f"Loaded {len(st.session_state.df)} comments")
 
 # ---------------- LOAD PREVIOUS DATA ----------------
@@ -104,6 +118,50 @@ if csv_files:
     if selected != st.session_state.csv_path:
         st.session_state.csv_path = selected
         st.session_state.df = pd.read_csv(selected)
+        
+        # Try to load metadata
+        metadata_path = selected.replace("comments_", "metadata_").replace(".csv", ".json")
+        if os.path.exists(metadata_path):
+            import json
+            with open(metadata_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                st.session_state.video_metadata = data.get("metadata")
+                st.session_state.ai_summary = data.get("ai_summary")
+
+# ---------------- VIDEO INFO SECTION ----------------
+if st.session_state.video_metadata:
+    st.markdown("---")
+    
+    meta = st.session_state.video_metadata
+    
+    # Check if it's YouTube or Instagram based on metadata keys
+    is_youtube = "video_id" in meta
+    is_instagram = "reel_id" in meta
+    
+    if is_youtube:
+        st.subheader("🎥 Video Information")
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("👁️ Views", f"{meta['view_count']:,}")
+        col2.metric("👍 Likes", f"{meta['like_count']:,}")
+        col3.metric("💬 Comments", f"{meta['comment_count']:,}")
+        col4.metric("📺 Channel", meta['channel_title'])
+        st.markdown(f"**Title:** {meta['title']}")
+    
+    elif is_instagram:
+        st.subheader("📸 Reel Information")
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("👁️ Views", f"{meta.get('view_count', 0):,}")
+        col2.metric("❤️ Likes", f"{meta.get('like_count', 0):,}")
+        col3.metric("💬 Comments", f"{meta.get('comment_count', 0):,}")
+        col4.metric("👤 User", f"@{meta.get('username', 'Unknown')}")
+        
+        if meta.get('caption'):
+            with st.expander("📝 Caption"):
+                st.write(meta['caption'])
+    
+    if st.session_state.ai_summary:
+        with st.expander("🤖 AI-Generated Summary"):
+            st.write(st.session_state.ai_summary)
 
 # ---------------- ANALYSIS ----------------
 if st.session_state.df is not None:
@@ -153,6 +211,17 @@ if st.session_state.df is not None:
     c2.metric("Positive 😊", (df["category"] == "Positive").sum())
     c3.metric("Neutral 😐", (df["category"] == "Neutral").sum())
     c4.metric("Spam 🚫", (df["category"] == "Spam").sum())
+    
+    # ---------------- TOP LIKED COMMENTS ----------------
+    if "like_count" in df.columns:
+        st.markdown("---")
+        st.subheader("🔥 Top Liked Comments")
+        top_comments = df.nlargest(10, "like_count")
+        for idx, row in top_comments.iterrows():
+            with st.expander(f"👍 {row['like_count']} likes • {row.get('author', 'Unknown')}"):
+                st.write(row['comment'])
+                if 'published_at' in row:
+                    st.caption(f"Posted: {row['published_at']}")
 
     # ---------------- RISK ----------------
     st.markdown("---")
