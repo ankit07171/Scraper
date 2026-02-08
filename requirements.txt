@@ -3,6 +3,7 @@ pandas
 matplotlib
 python-dotenv
 requests
-apify-client   
+apify-client
 textblob
 google-generativeai
+scikit-learn
